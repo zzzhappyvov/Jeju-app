@@ -75,30 +75,41 @@
                 <h3 class="text-2xl font-bold text-gray-800 leading-snug break-words">
                   {{ event.name }}
                 </h3>
+                
+                <!-- 聯絡資訊區 (地址與電話) -->
+                <div v-if="event.address || event.phone" class="mt-3 p-3 bg-gray-50 rounded-xl space-y-2">
+                  <div v-if="event.phone" class="text-sm text-gray-700 flex items-center">
+                    <div class="bg-[#99A89E]/20 w-7 h-7 rounded-full flex items-center justify-center mr-2">
+                      <i class="fa-solid fa-phone text-[#99A89E] text-xs"></i>
+                    </div>
+                    <a :href="'tel:' + event.phone" class="font-bold text-[#7B9095] underline decoration-[#7B9095]/40 underline-offset-4 active:text-[#99A89E] transition-colors">{{ event.phone }}</a>
+                  </div>
+                  <div v-if="event.address" class="text-sm text-gray-700 flex items-start">
+                    <div class="bg-[#99A89E]/20 w-7 h-7 rounded-full flex items-center justify-center mr-2 shrink-0">
+                      <i class="fa-solid fa-location-dot text-[#99A89E] text-xs"></i>
+                    </div>
+                    <span class="leading-relaxed font-medium mt-0.5">{{ event.address }}</span>
+                  </div>
+                </div>
+
                 <!-- 備註 -->
-                <p v-if="event.note" class="text-gray-500 mt-2 text-base leading-relaxed">
+                <p v-if="event.note" class="text-gray-500 mt-3 text-base leading-relaxed border-t border-gray-100 pt-3">
                   {{ event.note }}
                 </p>
               </div>
             </div>
 
             <!-- 互動按鈕區 -->
-            <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
-              <!-- Naver Map 導航 (莫蘭迪綠) - 移除 target="_blank" 改善手機版導航體驗 -->
-              <a :href="'https://map.naver.com/p/search/' + encodeURIComponent(event.searchName || event.name)" 
-                 class="flex-1 bg-[#99A89E] text-white py-3 px-2 rounded-xl text-center font-bold text-lg btn-active shadow-sm flex items-center justify-center gap-2">
-                <i class="fa-solid fa-map-location-dot"></i> 導航
-              </a>
-              
+            <div class="flex flex-wrap gap-2 mt-2">
               <!-- 編輯按鈕 (莫蘭迪粉) -->
               <button @click="openEditModal(dayIndex, eventIndex)" 
-                      class="flex-1 bg-[#D0A7A0] text-white py-3 px-2 rounded-xl text-center font-bold text-lg btn-active shadow-sm flex items-center justify-center gap-2">
+                      class="flex-1 bg-[#D0A7A0]/10 text-[#D0A7A0] py-2.5 px-2 rounded-xl text-center font-bold text-base btn-active flex items-center justify-center gap-2 transition-colors hover:bg-[#D0A7A0] hover:text-white border border-[#D0A7A0]/30">
                 <i class="fa-solid fa-pen"></i> 編輯
               </button>
               
               <!-- 刪除按鈕 (莫蘭迪紫) -->
               <button @click="openConfirmModal(dayIndex, eventIndex)" 
-                      class="w-14 bg-[#A29CBA] text-white py-3 rounded-xl text-center font-bold text-lg btn-active shadow-sm flex items-center justify-center">
+                      class="w-12 bg-gray-100 text-gray-400 py-2.5 rounded-xl text-center font-bold text-base btn-active flex items-center justify-center transition-colors hover:bg-[#A29CBA] hover:text-white">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>
@@ -132,8 +143,8 @@
     <!-- 自訂編輯行程視窗 -->
     <transition name="modal">
       <div v-if="showEditModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-3xl p-6 max-w-[320px] w-full shadow-2xl">
-          <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
+        <div class="bg-white rounded-[2rem] p-6 max-w-[340px] w-full shadow-2xl max-h-[90vh] overflow-y-auto" style="-ms-overflow-style: none; scrollbar-width: none;">
+          <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2 sticky top-0 bg-white z-10 pb-2">
             <i class="fa-solid fa-pen text-[#D0A7A0]"></i> 編輯行程
           </h3>
           <div class="space-y-4 mb-6">
@@ -142,15 +153,23 @@
               <input v-model="editData.time" type="text" placeholder="例如: 10:00" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#99A89E] bg-gray-50 text-gray-800">
             </div>
             <div>
-              <label class="block text-sm font-bold text-gray-600 mb-1">景點名稱</label>
+              <label class="block text-sm font-bold text-gray-600 mb-1">景點名稱 <span class="text-red-400">*</span></label>
               <input v-model="editData.name" type="text" placeholder="輸入景點或餐廳名稱" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#99A89E] bg-gray-50 text-gray-800">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-600 mb-1">電話 (選填)</label>
+              <input v-model="editData.phone" type="text" placeholder="輸入聯絡電話" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#99A89E] bg-gray-50 text-gray-800">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-600 mb-1">地址 (選填)</label>
+              <textarea v-model="editData.address" rows="2" placeholder="輸入地址" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#99A89E] bg-gray-50 text-gray-800 resize-none"></textarea>
             </div>
             <div>
               <label class="block text-sm font-bold text-gray-600 mb-1">備註 (可留白)</label>
               <textarea v-model="editData.note" rows="2" placeholder="詳細資訊或提醒" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#99A89E] bg-gray-50 text-gray-800 resize-none"></textarea>
             </div>
           </div>
-          <div class="flex justify-end gap-3">
+          <div class="flex justify-end gap-3 sticky bottom-0 bg-white pt-2">
             <button @click="showEditModal = false" class="px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold btn-active">取消</button>
             <button @click="saveEdit" class="px-5 py-2.5 rounded-xl bg-[#D0A7A0] text-white font-bold shadow-md btn-active">儲存</button>
           </div>
@@ -175,33 +194,37 @@
             title: 'Day 1 (6/20 六)',
             date: '2026-06-20',
             events: [
-              { id: 101, time: '10:00', name: '抵達濟州機場 -> 樂天租車取車', searchName: '濟州國際機場 樂天租車' },
-              { id: 102, time: '12:30', name: '姊妹麵條 (자매국수)', searchName: '자매국수' },
-              { id: 103, time: '下午', name: '甜點巡禮', note: 'Mongle雲朵餅乾、Mochiron達克瓦茲、umu布丁、Beeju beeju蛋塔、Garcon文創小店', searchName: '제주 우무' },
-              { id: 104, time: '16:00', name: '飯店 Check-in', note: '樂天城市酒店 (Lotte City Hotel Jeju)', searchName: 'Lotte City Hotel Jeju' },
-              { id: 105, time: '18:00', name: 'flowave cafe 火山咖啡廳落火祭', note: '17:00 提早卡位，19:00 開始落火祭表演', searchName: '플로웨이브' },
-              { id: 106, time: '宵夜', name: 'BHC 炸雞', note: '外帶回飯店吃', searchName: 'BHC치킨 제주' }
+              { id: 101, time: '10:00', name: '抵達濟州機場 -> 樂天租車取車' },
+              { id: 102, time: '12:30', name: '姊妹麵條 (자매국수)', phone: '064-746-2222' },
+              { id: 103, time: '下午', name: 'Mongle 雲朵餅乾', phone: '064-744-8224' },
+              { id: 104, time: '下午', name: 'Mochiron 達克瓦茲', phone: '+82-1688-1110' },
+              { id: 105, time: '下午', name: 'umu 布丁', phone: '+82-10-6705-0064' },
+              { id: 106, time: '下午', name: 'Beeju beeju 蛋塔', phone: '+82-507-1425-5556' },
+              { id: 107, time: '下午', name: 'Garcon 文創小店', phone: '+82649001335' },
+              { id: 108, time: '16:00', name: '飯店 Check-in', note: '樂天城市酒店 (Lotte City Hotel Jeju)', phone: '+82-64-730-1000' },
+              { id: 109, time: '18:00', name: 'flowave cafe 火山咖啡廳落火祭', note: '17:00 提早卡位，19:00 開始落火祭表演', address: '63-10 Jangwon-gil, Hallim-eup, 특별자치도 Jeju-si, 제주 南韓', phone: '0507-1305-9367' },
+              { id: 110, time: '宵夜', name: 'BHC 炸雞', note: '外帶回飯店吃', phone: '+82649005353' }
             ]
           },
           {
             title: 'Day 2 (6/21 日)',
             date: '2026-06-21',
             events: [
-              { id: 201, time: '10:00', name: '倫敦貝果博物館', note: 'London Bagel Museum Jeju', searchName: '런던베이글뮤지엄 제주점' },
-              { id: 202, time: '11:00', name: 'Object jeju', note: '文創店逛逛', searchName: '오브젝트 제주선흘점' },
-              { id: 203, time: '12:00', name: 'DOTOREE Kitchen 橡子廚房', note: '享用清爽的柑橘蕎麥麵', searchName: '도토리키친 본점' },
-              { id: 204, time: '18:00', name: '蓮洞商圈', note: '發掘在地美食', searchName: '제주 연동' }
+              { id: 201, time: '10:00', name: '倫敦貝果博物館', note: 'London Bagel Museum Jeju', address: '85 Dongbok-ro, Gujwa-eup, 특별자치도, Jeju-si, Jeju-do, 南韓' },
+              { id: 202, time: '11:00', name: 'Object jeju', note: '文創店逛逛', phone: '+82647830745', address: '722-1 Dongbok-ri, Gujwa-eup, 특별자치도 Jeju-si, Jeju-do, 南韓' },
+              { id: 203, time: '12:00', name: 'DOTOREE Kitchen 橡子廚房', note: '享用清爽的柑橘蕎麥麵', phone: '+82647821021' },
+              { id: 204, time: '18:00', name: '蓮洞商圈', note: '發掘在地美食', address: 'Yeondong 7-gil, 연동 Jeju-si, Jeju-do, 南韓' }
             ]
           },
           {
             title: 'Day 3 (6/22 一)',
             date: '2026-06-22',
             events: [
-              { id: 301, time: '09:30', name: 'Osulloc 茶博物館', note: '品嚐綠茶系列甜點', searchName: '오설록 티 뮤지엄' },
-              { id: 302, time: '12:30', name: '熟成到 中文店', note: '숙성도 (黑豬肉烤肉)', searchName: '숙성도 중문점' },
-              { id: 303, time: '15:00', name: '山茶花之丘 (Camellia Hill)', searchName: '카멜리아힐' },
-              { id: 304, time: '17:00', name: '西歸浦傳統市場', note: '必吃：炸壽司、老奶奶年糕、購買柑橘製品', searchName: '서귀포매일올레시장' },
-              { id: 305, time: '晚上', name: '飯店休息', note: 'Jeju GoldOne Hotel & Suites', searchName: '제주 골드원호텔앤스위트' }
+              { id: 301, time: '09:30', name: 'Osulloc 茶博物館', note: '品嚐綠茶系列甜點', phone: '+82-6-4794-5312', address: '15 Sinhwayeoksa-ro, Andeok-myeon, 특별자치도, Seogwipo-si, Jeju-do, 南韓' },
+              { id: 302, time: '12:30', name: '熟成到 中文店', note: '숙성도 (黑豬肉烤肉)', phone: '+82647395213', address: '1101 Iljuseo-ro, 특별자치도, Seogwipo-si, Jeju-do, 南韓' },
+              { id: 303, time: '15:00', name: '山茶花之丘 (Camellia Hill)', phone: '+82-6-4759-0088', address: '166 Byeongak-ro, Andeok-myeon, Seogwipo-si, Jeju-do, 南韓' },
+              { id: 304, time: '17:00', name: '西歸浦傳統市場', note: '必吃：炸壽司、老奶奶年糕、購買柑橘製品', address: '南韓 Jeju-do, Seogwipo-si, Jungjeong-ro 73beon-gil, 서귀동 22' },
+              { id: 305, time: '晚上', name: '飯店休息', note: 'Jeju GoldOne Hotel & Suites', phone: '+82-6-4801-5000', address: '1032 Ieodo-ro, Daeryun-dong, Seogwipo-si, Jeju-do, 南韓' }
             ]
           },
           {
@@ -209,45 +232,46 @@
             date: '2026-06-23',
             events: [
               { id: 401, time: '12:00', name: '睡到自然醒', note: '飯店享用早餐 (Jeju GoldOne Hotel)' },
-              { id: 402, time: '13:00', name: '春心家總店 (춘심이네 본점)', note: '享用肥美白帶魚', searchName: '춘심이네 본점' },
-              { id: 403, time: '14:00', name: 'Harakeke 南洋風咖啡廳', searchName: '하라케케 제주' },
-              { id: 404, time: '16:00', name: 'Olive Young 西歸浦店', note: '採購藥妝，並在市區發掘在地小吃', searchName: '올리브영 서귀포' }
+              { id: 402, time: '13:00', name: '春心家總店 (춘심이네 본점)', note: '享用肥美白帶魚', phone: '+82-6-4794-4010', address: '16 Changcheonjungang-ro 24beon-gil, Andeok-myeon, Seogwipo-si, Jeju-do, 南韓' },
+              { id: 403, time: '14:00', name: 'Harakeke 南洋風咖啡廳', phone: '+82-507-1311-0878', address: '29-10 Sokgol-ro, 특별자치도, Seogwipo-si, Jeju-do, 南韓' },
+              { id: 404, time: '16:00', name: 'Olive Young 西歸浦店', note: '採購藥妝，並在市區發掘在地小吃', phone: '+82-1577-4887', address: '82 Jungmungwangwang-ro, 특별자치도, Seogwipo-si, Jeju-do, 南韓' }
             ]
           },
           {
             title: 'Day 5 (6/24 三)',
             date: '2026-06-24',
             events: [
-              { id: 501, time: '10:30', name: '前往城山港旅客碼頭', searchName: '성산포종합여객터미널' },
-              { id: 502, time: '11:00', name: '抵達牛島', searchName: '우도' },
-              { id: 503, time: '12:30', name: '牛島 on-off', note: '享用黑豬肉炸豬排', searchName: '우도 온오프' },
-              { id: 504, time: '14:00', name: 'Udo Sand & Blanc Rocher', note: '吃花生冰淇淋、看海喝咖啡', searchName: '블랑로쉐' },
+              { id: 501, time: '10:30', name: '前往城山港旅客碼頭', address: '130-19 Seongsandeungyong-ro, Seongsan-eup, Seogwipo-si, Jeju-do, 南韓' },
+              { id: 502, time: '11:00', name: '抵達牛島' },
+              { id: 503, time: '12:30', name: '牛島 on-off', note: '享用黑豬肉炸豬排', phone: '+82-6-4783-9789', address: '690 Yeonpyeong-ri, Udo-myeon, Jeju-si, Jeju-do, 南韓' },
+              { id: 5041, time: '14:00', name: 'Udo Sand', note: '吃花生冰淇淋', phone: '+82-10-7475-4121', address: '780-2 Udohaean-gil, Udo-myeon, 특별자치도, Jeju-si, Jeju-do, 南韓' },
+              { id: 5042, time: '下午', name: 'Blanc Rocher', note: '看海喝咖啡', phone: '+82-6-4784-0045', address: '712-1 Yeonpyeong-ri, Udo-myeon, 특별자치도, Jeju-si, Jeju-do, 南韓' },
               { id: 505, time: '18:00', name: '回停車場取車' },
-              { id: 506, time: '18:30', name: '展望好的生魚片&黑豬肉餐廳', note: '전망좋은횟집&흑돼지 성산본점', searchName: '전망좋은횟집 성산본점' },
-              { id: 507, time: '晚上', name: '入住 城山合作城市酒店', searchName: '코업시티호텔 성산' }
+              { id: 506, time: '18:30', name: '刺身和黑豬肉餐廳 전망좋은횟집&흑돼지 성산본점', phone: '+82-6-4784-1568', address: '399-8 Seongsan-ri, Seongsan-eup, 특별자치도, Seogwipo-si, Jeju-do, 南韓' },
+              { id: 507, time: '晚上', name: '入住 城山合作城市酒店', phone: '+82-6-4780-9800', address: '南韓 Jeju-do, Seogwipo-si, 특별자치도, Seongsan-eup, Seongsan-ri, 250 KR' }
             ]
           },
           {
             title: 'Day 6 (6/25 四)',
             date: '2026-06-25',
             events: [
-              { id: 601, time: '10:30', name: '涉地可支 (Seopjikoji)', note: '散步大氣海岸步道，逛安藤忠雄設計的玻璃屋', searchName: '섭지코지' },
-              { id: 602, time: '12:00', name: '城山珍味食堂', note: '성산진미식당 吃鮑魚', searchName: '성산진미식당' },
-              { id: 603, time: '14:00', name: '海女下水採收表演', searchName: '성산일출봉 해녀물질공연' },
-              { id: 604, time: '16:00', name: 'cafe mou moo', note: '吃麵包配大海', searchName: '카페 모무' },
-              { id: 605, time: '晚上', name: '入住 濟州君悅酒店', note: 'Grand Hyatt Jeju', searchName: '그랜드 하얏트 제주' }
+              { id: 601, time: '10:30', name: '涉地可支 (Seopjikoji)', note: '散步大氣海岸步道，逛安藤忠雄設計的玻璃屋', phone: '+82-64-782-0080', address: 'Seopjikoji-ro, Seongsan-eup, Seogwipo-si, Jeju-do, South Korea' },
+              { id: 602, time: '12:00', name: '城山珍味食堂', note: '성산진미식당 吃鮑魚', phone: '+82-50-71325-2300', address: '204 Seongsan-ri, Seongsan-eup, Seogwipo-si, Jeju-do, South Korea' },
+              { id: 603, time: '14:00', name: '海女下水採收表演', phone: '+82647830959', address: '284-34 Ilchul-ro, Seongsan-eup, 특별자치도 Seogwipo-si, Jeju-do, 南韓' },
+              { id: 604, time: '16:00', name: 'cafe mou moo', note: '吃麵包配大海', phone: '+82-507-1306-3519', address: '460 Haemajihaean-ro, Gujwa-eup, 특별자치도, Jeju-si, Jeju-do, 南韓' },
+              { id: 605, time: '晚上', name: '入住 濟州君悅酒店', note: 'Grand Hyatt Jeju', phone: '+82-6-4907-1234', address: '12 Noyeon-ro, Jeju-si, Jeju-do, 南韓' }
             ]
           },
           {
             title: 'Day 7 (6/26 五)',
             date: '2026-06-26',
             events: [
-              { id: 701, time: '11:00', name: '君悅享用早餐、退房', note: '退房後於東門市場周邊逛逛' },
-              { id: 702, time: '11:30', name: 'Abebe Bakery Jeju', note: '東門市場外帶爆漿奶油麵包', searchName: '아베베베이커리 제주' },
-              { id: 703, time: '13:00', name: '菜板豚 (돔베돈)', searchName: '돔베돈' },
-              { id: 704, time: '15:00', name: 'Siso Kaymak 卷卷濃厚奶油', note: '品嚐驚豔的土耳其奶油麵包', searchName: '쉬소 카이막' },
-              { id: 705, time: '15:30', name: '樂天超市最後採購', note: '把伴手禮塞滿後車廂', searchName: '롯데마트 제주점' },
-              { id: 706, time: '17:00', name: '樂天租車還車', note: '搭乘接駁車前往機場', searchName: '롯데렌터카 제주오토하우스' },
+              { id: 701, time: '11:00', name: '君悅享用早餐、退房 -> 東門市場', note: '退房後於周邊逛逛', address: '9 Dongmun-ro 4-gil, Jeju-si, Jeju-do, 南韓' },
+              { id: 702, time: '11:30', name: 'Abebe Bakery Jeju', note: '東門市場外帶爆漿奶油麵包', phone: '+82-10-8857-0750', address: '4 Dongmun-ro 6-gil, 특별자치도, Jeju-si, Jeju-do, 南韓' },
+              { id: 703, time: '13:00', name: '菜板豚 (돔베돈)', phone: '+82-6-4753-0008', address: '25 Gwandeok-ro 15-gil, Geonip-dong, 특별자치도, Jeju-si, Jeju-do, 南韓' },
+              { id: 704, time: '15:00', name: 'Siso Kaymak 卷卷濃厚奶油', note: '品嚐驚豔的土耳其奶油麵包', phone: '+82-6-4900-1555', address: '9 Dongmun-ro 6-gil, 특별자치도, Jeju-si, Jeju-do, 南韓' },
+              { id: 705, time: '15:30', name: '樂天超市最後採購', note: '把伴手禮塞滿後車廂', phone: '+82-6-4798-2500', address: '1 Yeonbuk-ro, 특별자치도, Jeju-si, Jeju-do, 南韓' },
+              { id: 706, time: '17:00', name: '樂天租車還車', note: '搭乘接駁車前往機場', address: '제주 제주시 용해로 92 1층' },
               { id: 707, time: '17:55', name: '辦理登機手續' },
               { id: 708, time: '19:55', name: '搭乘虎航 IT633 滿載而歸！' }
             ]
@@ -259,7 +283,7 @@
         const confirmTarget = ref({ dayIndex: null, eventIndex: null });
         
         const showEditModal = ref(false);
-        const editData = ref({ dayIndex: null, eventIndex: null, time: '', name: '', note: '' });
+        const editData = ref({ dayIndex: null, eventIndex: null, time: '', name: '', phone: '', address: '', note: '' });
 
         // --- 刪除功能 ---
         const openConfirmModal = (dayIndex, eventIndex) => {
@@ -281,21 +305,24 @@
             eventIndex,
             time: event.time || '',
             name: event.name || '',
+            phone: event.phone || '',
+            address: event.address || '',
             note: event.note || ''
           };
           showEditModal.value = true;
         };
 
         const saveEdit = () => {
-          const { dayIndex, eventIndex, time, name, note } = editData.value;
+          const { dayIndex, eventIndex, time, name, phone, address, note } = editData.value;
           
           if (!name.trim()) return; // 防止名稱為空
           
           const event = itinerary.value[dayIndex].events[eventIndex];
           event.time = time;
           event.name = name;
+          event.phone = phone;
+          event.address = address;
           event.note = note;
-          event.searchName = name; // 自動更新搜尋字詞
           
           showEditModal.value = false;
         };
