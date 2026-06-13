@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>濟州島 7天6夜 家族旅行</title>
+  <!-- 引入 Tailwind CSS 進行快速排版與美化 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 Vue.js 處理資料與互動 (編輯/刪除) -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <!-- 引入 FontAwesome 圖示 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* 隱藏滾動條但保留滾動功能，讓畫面更乾淨 */
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    
+    /* 點擊時的微動畫 */
+    .btn-active:active { transform: scale(0.95); transition: transform 0.1s; }
+    
+    /* Vue 動畫過渡效果 */
+    .list-enter-active, .list-leave-active { transition: all 0.4s ease; }
+    .list-enter-from, .list-leave-to { opacity: 0; transform: translateX(-30px); }
+    .modal-enter-active, .modal-leave-active { transition: opacity 0.3s ease; }
+    .modal-enter-from, .modal-leave-to { opacity: 0; }
+  </style>
+</head>
+<body class="bg-[#F4F5F4] text-gray-800 antialiased pb-20">
+
+  <div id="app" class="max-w-md mx-auto relative">
+    
+    <!-- 頂部資訊區 (莫蘭迪藍) -->
+    <header class="bg-[#7B9095] text-white p-6 rounded-b-[2.5rem] shadow-md relative z-10">
+      <h1 class="text-3xl font-bold mb-2 tracking-wide">濟州島自駕行 🚗</h1>
+      <p class="text-lg opacity-90 mb-4">7天6夜｜樂天租車</p>
+      
+      <!-- 航班資訊卡片 -->
+      <div class="bg-white/20 rounded-2xl p-4 backdrop-blur-sm">
+        <div class="flex items-center mb-2">
+          <i class="fa-solid fa-plane-departure mr-3 text-xl"></i>
+          <span class="text-lg font-medium">6/20 去程 IT632 (07:00-10:00)</span>
+        </div>
+        <div class="flex items-center">
+          <i class="fa-solid fa-plane-arrival mr-3 text-xl"></i>
+          <span class="text-lg font-medium">6/26 回程 IT633 (19:55-21:00)</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 行程列表區 -->
+    <main class="px-4 mt-6">
+      <div v-for="(day, dayIndex) in itinerary" :key="day.date" class="mb-8">
+        
+        <!-- 日期標題 -->
+        <div class="flex items-center mb-4 sticky top-4 z-20">
+          <div class="bg-[#99A89E] text-white px-5 py-2 rounded-full shadow-sm text-xl font-bold flex items-center">
+            <i class="fa-regular fa-calendar-check mr-2"></i> {{ day.title }}
+          </div>
+        </div>
+
+        <!-- 景點卡片列表 -->
+        <transition-group name="list" tag="div" class="space-y-4">
+          <div v-for="(event, eventIndex) in day.events" :key="event.id" 
+               class="bg-white rounded-3xl p-5 shadow-sm border-l-[6px]"
+               :style="{ borderColor: getBorderColor(eventIndex) }">
+            
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex-1 pr-2">
+                <!-- 時間 -->
+                <div class="text-[#A29CBA] font-bold text-lg mb-1 flex items-center" v-if="event.time">
+                  <i class="fa-regular fa-clock mr-2"></i> {{ event.time }}
+                </div>
+                <!-- 景點名稱 -->
+                <h3 class="text-2xl font-bold text-gray-800 leading-snug break-words">
+                  {{ event.name }}
+                </h3>
+                <!-- 備註 -->
+                <p v-if="event.note" class="text-gray-500 mt-2 text-base leading-relaxed">
+                  {{ event.note }}
+                </p>
+              </div>
+            </div>
+
+            <!-- 互動按鈕區 -->
+            <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
+              <!-- Naver Map 導航 (莫蘭迪綠) - 移除 target="_blank" 改善手機版導航體驗 -->
+              <a :href="'https://map.naver.com/p/search/' + encodeURIComponent(event.searchName || event.name)" 
+                 class="flex-1 bg-[#99A89E] text-white py-3 px-2 rounded-xl text-center font-bold text-lg btn-active shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-map-location-dot"></i> 導航
+              </a>
+              
+              <!-- 編輯按鈕 (莫蘭迪粉) -->
+              <button @click="openEditModal(dayIndex, eventIndex)" 
+                      class="flex-1 bg-[#D0A7A0] text-white py-3 px-2 rounded-xl text-center font-bold text-lg btn-active shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-pen"></i> 編輯
+              </button>
+              
+              <!-- 刪除按鈕 (莫蘭迪紫) -->
+              <button @click="openConfirmModal(dayIndex, eventIndex)" 
+                      class="w-14 bg-[#A29CBA] text-white py-3 rounded-xl text-center font-bold text-lg btn-active shadow-sm flex items-center justify-center">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+
+          </div>
+        </transition-group>
+        
+        <!-- 當天行程已被清空時的提示 -->
+        <div v-if="day.events.length === 0" class="text-center text-gray-400 py-6 border-2 border-dashed border-gray-300 rounded-2xl">
+          這天的行程已清空，可好好休息！
+        </div>
+      </div>
+    </main>
+
+    <!-- 自訂刪除確認視窗 -->
+    <transition name="modal">
+      <div v-if="showConfirmModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-[320px] w-full shadow-2xl">
+          <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-red-400"></i> 確認刪除
+          </h3>
+          <p class="text-gray-600 mb-6">確定要刪除這個行程嗎？此動作無法復原。</p>
+          <div class="flex justify-end gap-3">
+            <button @click="showConfirmModal = false" class="px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold btn-active">取消</button>
+            <button @click="confirmDelete" class="px-5 py-2.5 rounded-xl bg-[#A29CBA] text-white font-bold shadow-md btn-active">刪除</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 自訂編輯行程視窗 -->
+    <transition name="modal">
+      <div v-if="showEditModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-[320px] w-full shadow-2xl">
+          <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
+            <i class="fa-solid fa-pen text-[#D0A7A0]"></i> 編輯行程
+          </h3>
+          <div class="space-y-4 mb-6">
+            <div>
+              <label class="block text-sm font-bold text-gray-600 mb-1">時間</label>
+              <input v-model="editData.time" type="text" placeholder="例如: 10:00" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#99A89E] bg-gray-50 text-gray-800">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-600 mb-1">景點名稱</label>
+              <input v-model="editData.name" type="text" placeholder="輸入景點或餐廳名稱" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#99A89E] bg-gray-50 text-gray-800">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-600 mb-1">備註 (可留白)</label>
+              <textarea v-model="editData.note" rows="2" placeholder="詳細資訊或提醒" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#99A89E] bg-gray-50 text-gray-800 resize-none"></textarea>
+            </div>
+          </div>
+          <div class="flex justify-end gap-3">
+            <button @click="showEditModal = false" class="px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold btn-active">取消</button>
+            <button @click="saveEdit" class="px-5 py-2.5 rounded-xl bg-[#D0A7A0] text-white font-bold shadow-md btn-active">儲存</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+  </div>
+
+  <script>
+    const { createApp, ref } = Vue;
+
+    createApp({
+      setup() {
+        // 莫蘭迪色系循環，用於卡片邊框點綴
+        const borderColors = ['#7B9095', '#99A89E', '#D0A7A0', '#A29CBA'];
+        const getBorderColor = (index) => borderColors[index % borderColors.length];
+
+        // 完整的行程資料
+        const itinerary = ref([
+          {
+            title: 'Day 1 (6/20 六)',
+            date: '2026-06-20',
+            events: [
+              { id: 101, time: '10:00', name: '抵達濟州機場 -> 樂天租車取車', searchName: '濟州國際機場 樂天租車' },
+              { id: 102, time: '12:30', name: '姊妹麵條 (자매국수)', searchName: '자매국수' },
+              { id: 103, time: '下午', name: '甜點巡禮', note: 'Mongle雲朵餅乾、Mochiron達克瓦茲、umu布丁、Beeju beeju蛋塔、Garcon文創小店', searchName: '제주 우무' },
+              { id: 104, time: '16:00', name: '飯店 Check-in', note: '樂天城市酒店 (Lotte City Hotel Jeju)', searchName: 'Lotte City Hotel Jeju' },
+              { id: 105, time: '18:00', name: 'flowave cafe 火山咖啡廳落火祭', note: '17:00 提早卡位，19:00 開始落火祭表演', searchName: '플로웨이브' },
+              { id: 106, time: '宵夜', name: 'BHC 炸雞', note: '外帶回飯店吃', searchName: 'BHC치킨 제주' }
+            ]
+          },
+          {
+            title: 'Day 2 (6/21 日)',
+            date: '2026-06-21',
+            events: [
+              { id: 201, time: '10:00', name: '倫敦貝果博物館', note: 'London Bagel Museum Jeju', searchName: '런던베이글뮤지엄 제주점' },
+              { id: 202, time: '11:00', name: 'Object jeju', note: '文創店逛逛', searchName: '오브젝트 제주선흘점' },
+              { id: 203, time: '12:00', name: 'DOTOREE Kitchen 橡子廚房', note: '享用清爽的柑橘蕎麥麵', searchName: '도토리키친 본점' },
+              { id: 204, time: '18:00', name: '蓮洞商圈', note: '發掘在地美食', searchName: '제주 연동' }
+            ]
+          },
+          {
+            title: 'Day 3 (6/22 一)',
+            date: '2026-06-22',
+            events: [
+              { id: 301, time: '09:30', name: 'Osulloc 茶博物館', note: '品嚐綠茶系列甜點', searchName: '오설록 티 뮤지엄' },
+              { id: 302, time: '12:30', name: '熟成到 中文店', note: '숙성도 (黑豬肉烤肉)', searchName: '숙성도 중문점' },
+              { id: 303, time: '15:00', name: '山茶花之丘 (Camellia Hill)', searchName: '카멜리아힐' },
+              { id: 304, time: '17:00', name: '西歸浦傳統市場', note: '必吃：炸壽司、老奶奶年糕、購買柑橘製品', searchName: '서귀포매일올레시장' },
+              { id: 305, time: '晚上', name: '飯店休息', note: 'Jeju GoldOne Hotel & Suites', searchName: '제주 골드원호텔앤스위트' }
+            ]
+          },
+          {
+            title: 'Day 4 (6/23 二)',
+            date: '2026-06-23',
+            events: [
+              { id: 401, time: '12:00', name: '睡到自然醒', note: '飯店享用早餐 (Jeju GoldOne Hotel)' },
+              { id: 402, time: '13:00', name: '春心家總店 (춘심이네 본점)', note: '享用肥美白帶魚', searchName: '춘심이네 본점' },
+              { id: 403, time: '14:00', name: 'Harakeke 南洋風咖啡廳', searchName: '하라케케 제주' },
+              { id: 404, time: '16:00', name: 'Olive Young 西歸浦店', note: '採購藥妝，並在市區發掘在地小吃', searchName: '올리브영 서귀포' }
+            ]
+          },
+          {
+            title: 'Day 5 (6/24 三)',
+            date: '2026-06-24',
+            events: [
+              { id: 501, time: '10:30', name: '前往城山港旅客碼頭', searchName: '성산포종합여객터미널' },
+              { id: 502, time: '11:00', name: '抵達牛島', searchName: '우도' },
+              { id: 503, time: '12:30', name: '牛島 on-off', note: '享用黑豬肉炸豬排', searchName: '우도 온오프' },
+              { id: 504, time: '14:00', name: 'Udo Sand & Blanc Rocher', note: '吃花生冰淇淋、看海喝咖啡', searchName: '블랑로쉐' },
+              { id: 505, time: '18:00', name: '回停車場取車' },
+              { id: 506, time: '18:30', name: '展望好的生魚片&黑豬肉餐廳', note: '전망좋은횟집&흑돼지 성산본점', searchName: '전망좋은횟집 성산본점' },
+              { id: 507, time: '晚上', name: '入住 城山合作城市酒店', searchName: '코업시티호텔 성산' }
+            ]
+          },
+          {
+            title: 'Day 6 (6/25 四)',
+            date: '2026-06-25',
+            events: [
+              { id: 601, time: '10:30', name: '涉地可支 (Seopjikoji)', note: '散步大氣海岸步道，逛安藤忠雄設計的玻璃屋', searchName: '섭지코지' },
+              { id: 602, time: '12:00', name: '城山珍味食堂', note: '성산진미식당 吃鮑魚', searchName: '성산진미식당' },
+              { id: 603, time: '14:00', name: '海女下水採收表演', searchName: '성산일출봉 해녀물질공연' },
+              { id: 604, time: '16:00', name: 'cafe mou moo', note: '吃麵包配大海', searchName: '카페 모무' },
+              { id: 605, time: '晚上', name: '入住 濟州君悅酒店', note: 'Grand Hyatt Jeju', searchName: '그랜드 하얏트 제주' }
+            ]
+          },
+          {
+            title: 'Day 7 (6/26 五)',
+            date: '2026-06-26',
+            events: [
+              { id: 701, time: '11:00', name: '君悅享用早餐、退房', note: '退房後於東門市場周邊逛逛' },
+              { id: 702, time: '11:30', name: 'Abebe Bakery Jeju', note: '東門市場外帶爆漿奶油麵包', searchName: '아베베베이커리 제주' },
+              { id: 703, time: '13:00', name: '菜板豚 (돔베돈)', searchName: '돔베돈' },
+              { id: 704, time: '15:00', name: 'Siso Kaymak 卷卷濃厚奶油', note: '品嚐驚豔的土耳其奶油麵包', searchName: '쉬소 카이막' },
+              { id: 705, time: '15:30', name: '樂天超市最後採購', note: '把伴手禮塞滿後車廂', searchName: '롯데마트 제주점' },
+              { id: 706, time: '17:00', name: '樂天租車還車', note: '搭乘接駁車前往機場', searchName: '롯데렌터카 제주오토하우스' },
+              { id: 707, time: '17:55', name: '辦理登機手續' },
+              { id: 708, time: '19:55', name: '搭乘虎航 IT633 滿載而歸！' }
+            ]
+          }
+        ]);
+
+        // --- 視窗狀態管理 ---
+        const showConfirmModal = ref(false);
+        const confirmTarget = ref({ dayIndex: null, eventIndex: null });
+        
+        const showEditModal = ref(false);
+        const editData = ref({ dayIndex: null, eventIndex: null, time: '', name: '', note: '' });
+
+        // --- 刪除功能 ---
+        const openConfirmModal = (dayIndex, eventIndex) => {
+          confirmTarget.value = { dayIndex, eventIndex };
+          showConfirmModal.value = true;
+        };
+
+        const confirmDelete = () => {
+          const { dayIndex, eventIndex } = confirmTarget.value;
+          itinerary.value[dayIndex].events.splice(eventIndex, 1);
+          showConfirmModal.value = false;
+        };
+
+        // --- 編輯功能 ---
+        const openEditModal = (dayIndex, eventIndex) => {
+          const event = itinerary.value[dayIndex].events[eventIndex];
+          editData.value = {
+            dayIndex,
+            eventIndex,
+            time: event.time || '',
+            name: event.name || '',
+            note: event.note || ''
+          };
+          showEditModal.value = true;
+        };
+
+        const saveEdit = () => {
+          const { dayIndex, eventIndex, time, name, note } = editData.value;
+          
+          if (!name.trim()) return; // 防止名稱為空
+          
+          const event = itinerary.value[dayIndex].events[eventIndex];
+          event.time = time;
+          event.name = name;
+          event.note = note;
+          event.searchName = name; // 自動更新搜尋字詞
+          
+          showEditModal.value = false;
+        };
+
+        return {
+          itinerary,
+          getBorderColor,
+          
+          // 視窗變數
+          showConfirmModal,
+          showEditModal,
+          editData,
+          
+          // 操作方法
+          openConfirmModal,
+          confirmDelete,
+          openEditModal,
+          saveEdit
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
